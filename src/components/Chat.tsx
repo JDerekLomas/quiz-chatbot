@@ -1,7 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { useEffect, useRef, useState, FormEvent } from "react";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useRef, useState, useMemo, FormEvent } from "react";
 import { QuizCard } from "./QuizCard";
 
 interface QuizToolOutput {
@@ -16,7 +17,16 @@ interface QuizToolOutput {
 }
 
 export function Chat() {
-  const { messages, sendMessage, status } = useChat();
+  const sessionIdRef = useRef(crypto.randomUUID());
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { sessionId: sessionIdRef.current },
+      }),
+    []
+  );
+  const { messages, sendMessage, status } = useChat({ transport });
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

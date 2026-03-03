@@ -8,13 +8,15 @@ import {
 } from "ai";
 import { z } from "zod";
 import { pickRandomQuestion, topics } from "@/lib/quiz-data";
+import { supabase } from "@/lib/supabase";
 
 export const maxDuration = 30;
 
 let questionCounter = 0;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, sessionId }: { messages: UIMessage[]; sessionId?: string } =
+    await req.json();
 
   // Extract already-shown question IDs from conversation history
   const shownIds: string[] = [];
@@ -33,6 +35,43 @@ export async function POST(req: Request) {
         ) {
           shownIds.push((part.output as { questionId: string }).questionId);
         }
+      }
+    }
+  }
+
+  // Parse quiz answers from user messages and log to Supabase
+  if (sessionId) {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+    if (lastUserMsg) {
+      const text = lastUserMsg.parts
+        .filter((p): p is { type: "text"; text: string } => p.type === "text")
+        .map((p) => p.text)
+        .join("");
+      const answerMatch = text.match(
+        /\[Quiz Answer\] \[qid:(.+?)\] \[source:(.+?)\] \[topic:(.+?)\] Question: "(.+?)" \u2014 I answered \[(\d+)\] ".+?" \u2014 (CORRECT|INCORRECT)\. ?(?:The correct answer was \[(\d+)\])?/
+      );
+      if (answerMatch) {
+        const [, qid, source, topic, question, selIdx, result, corrIdx] =
+          answerMatch;
+        const selectedIndex = parseInt(selIdx, 10);
+        const correctIndex = corrIdx
+          ? parseInt(corrIdx, 10)
+          : selectedIndex;
+        supabase
+          .from("quiz_answers")
+          .insert({
+            session_id: sessionId,
+            question_id: qid,
+            question_source: source,
+            topic,
+            question_text: question,
+            selected_index: selectedIndex,
+            correct_index: correctIndex,
+            is_correct: result === "CORRECT",
+          })
+          .then(({ error }) => {
+            if (error) console.error("Failed to insert quiz_answer:", error);
+          });
       }
     }
   }
@@ -121,6 +160,20 @@ Don't repeat the question or answer options in your response — the user alread
         }),
         execute: async ({ topic, question, options, correctIndex, explanation }) => {
           const id = `gen-${++questionCounter}-${Date.now()}`;
+          supabase
+            .from("generated_questions")
+            .insert({
+              question_id: id,
+              topic,
+              question_text: question,
+              options,
+              correct_index: correctIndex,
+              explanation,
+            })
+            .then(({ error }) => {
+              if (error)
+                console.error("Failed to insert generated_question:", error);
+            });
           return {
             questionId: id,
             topic,

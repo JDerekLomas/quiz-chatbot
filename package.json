@@ -12,6 +12,7 @@
     "@ai-sdk/anthropic": "^3.0.53",
     "@ai-sdk/google": "^3.0.36",
     "@ai-sdk/react": "^3.0.110",
+    "@supabase/supabase-js": "^2.98.0",
     "ai": "^6.0.108",
     "next": "16.1.6",
     "react": "19.2.3",

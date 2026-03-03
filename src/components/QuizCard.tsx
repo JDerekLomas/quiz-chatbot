@@ -14,6 +14,10 @@ interface QuizCardProps {
   onAnswer: (result: string) => void;
 }
 
+function getQuestionSource(questionId: string): "bank" | "generated" {
+  return questionId.startsWith("gen-") ? "generated" : "bank";
+}
+
 export function QuizCard({
   questionId,
   topic,
@@ -35,17 +39,18 @@ export function QuizCard({
       const correct = index === correctIndex;
       const selectedAnswer = options[index];
       const correctAnswer = options[correctIndex];
+      const source = getQuestionSource(questionId);
 
       // Send result back to Claude after a brief delay for the user to see feedback
       setTimeout(() => {
         onAnswer(
           correct
-            ? `[Quiz Answer] Question: "${question}" \u2014 I answered "${selectedAnswer}" \u2014 CORRECT!`
-            : `[Quiz Answer] Question: "${question}" \u2014 I answered "${selectedAnswer}" \u2014 INCORRECT. The correct answer was "${correctAnswer}".`
+            ? `[Quiz Answer] [qid:${questionId}] [source:${source}] [topic:${topic}] Question: "${question}" \u2014 I answered [${index}] "${selectedAnswer}" \u2014 CORRECT.`
+            : `[Quiz Answer] [qid:${questionId}] [source:${source}] [topic:${topic}] Question: "${question}" \u2014 I answered [${index}] "${selectedAnswer}" \u2014 INCORRECT. The correct answer was [${correctIndex}] "${correctAnswer}".`
         );
       }, 2000);
     },
-    [showFeedback, correctIndex, options, question, onAnswer]
+    [showFeedback, correctIndex, options, question, questionId, topic, onAnswer]
   );
 
   return (
