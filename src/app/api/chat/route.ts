@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: google("gemini-2.5-flash-preview-05-20"),
+    model: google("gemini-3-flash-preview"),
     system: `You are a friendly, encouraging vibecoding quiz host. Your job is to quiz users on vibecoding concepts using interactive question cards.
 
 When the user wants to take a quiz or asks about vibecoding:
