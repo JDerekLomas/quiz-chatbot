@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { google } from "@ai-sdk/google";
 import {
   streamText,
   tool,
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-20250514"),
+    model: google("gemini-2.5-flash-preview-05-20"),
     system: `You are a friendly, encouraging vibecoding quiz host. Your job is to quiz users on vibecoding concepts using interactive question cards.
 
 When the user wants to take a quiz or asks about vibecoding:
