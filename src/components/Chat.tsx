@@ -104,7 +104,11 @@ export function Chat() {
                     </div>
                   )}
                   {message.parts.map((part, i) => {
-                    if (part.type !== "tool-quizQuestion") return null;
+                    if (
+                      part.type !== "tool-quizQuestion" &&
+                      part.type !== "tool-generateQuestion"
+                    )
+                      return null;
 
                     // Type-narrow: tool parts have toolCallId, state, output
                     const toolPart = part as unknown as {
